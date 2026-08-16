@@ -1,22 +1,22 @@
 import { style } from "@vanilla-extract/css";
 
-const mirroredLayer = style({
+const fullScreenLayer = style({
   position: "absolute",
   inset: 0,
   width: "100%",
   height: "100%",
-  transform: "scaleX(-1)",
 });
 
 export const video = style([
-  mirroredLayer,
+  fullScreenLayer,
   {
     objectFit: "cover",
+    transform: "scaleX(-1)",
   },
 ]);
 
-export const canvas = style([
-  mirroredLayer,
+export const overlay = style([
+  fullScreenLayer,
   {
     display: "block",
     pointerEvents: "none",

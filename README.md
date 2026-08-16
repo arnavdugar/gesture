@@ -9,7 +9,7 @@ pnpm install
 pnpm dev
 ```
 
-The browser renders the webcam directly while a transparent canvas displays the detected hand landmarks.
+The browser renders the webcam directly while a transparent SVG displays the detected hand landmarks.
 
 ## Quality checks
 
