@@ -13,10 +13,13 @@ const chordHoldTimeMilliseconds = 100;
 const trackingLossGraceMilliseconds = 50;
 
 export type MusicalPerformance = {
+  alternateQuality: boolean;
+  degree: number;
   dominantSlider: number | null;
   notes: readonly number[];
   secondarySlider: number | null;
   triggerId: number;
+  voicing: ChordVoicing;
 };
 
 type GestureSettings = {
@@ -150,6 +153,8 @@ export function useGesturePerformance(
   }
 
   return {
+    alternateQuality,
+    degree: activeChord.degree,
     dominantSlider: sliders[dominantHand],
     notes: getChordMidiNotes(
       activeChord.degree,
@@ -160,5 +165,6 @@ export function useGesturePerformance(
     ),
     secondarySlider: sliders[secondaryHandedness],
     triggerId: activeChord.triggerId,
+    voicing,
   };
 }

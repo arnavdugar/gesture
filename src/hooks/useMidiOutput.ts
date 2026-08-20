@@ -5,8 +5,8 @@ import type { MusicalPerformance } from "./useGesturePerformance";
 const midiNoteOn = 0x90;
 const midiNoteOff = 0x80;
 const midiControlChange = 0xb0;
-const midiExpressionController = 11;
-const midiBrightnessController = 74;
+const midiDominantAngleController = 102;
+const midiSecondaryAngleController = 105;
 const midiAllNotesOffController = 123;
 const midiNoteVelocity = 100;
 const midiLearnSweepValues = [0, 32, 64, 96, 127, 96, 64, 32, 0] as const;
@@ -21,12 +21,12 @@ export type MidiLearnControl =
   | "secondary-vertical";
 
 const midiLearnControllers: Readonly<Record<MidiLearnControl, number>> = {
-  "dominant-angle": midiExpressionController,
-  "dominant-horizontal": 12,
-  "dominant-vertical": 13,
-  "secondary-angle": midiBrightnessController,
-  "secondary-horizontal": 75,
-  "secondary-vertical": 76,
+  "dominant-angle": midiDominantAngleController,
+  "dominant-horizontal": 103,
+  "dominant-vertical": 104,
+  "secondary-angle": midiSecondaryAngleController,
+  "secondary-horizontal": 106,
+  "secondary-vertical": 107,
 };
 
 type ActiveMidiChord = {
@@ -70,7 +70,10 @@ function releaseMidiChord(chord: ActiveMidiChord) {
       0,
     ]);
   }
+}
 
+function silenceMidiChord(chord: ActiveMidiChord) {
+  releaseMidiChord(chord);
   sendMidiMessage(chord.output, [
     getMidiStatus(midiControlChange, chord.channel),
     midiAllNotesOffController,
@@ -92,12 +95,12 @@ function startMidiChord(
 
   sendMidiMessage(output, [
     getMidiStatus(midiControlChange, channel),
-    midiBrightnessController,
+    midiSecondaryAngleController,
     brightness,
   ]);
   sendMidiMessage(output, [
     getMidiStatus(midiControlChange, channel),
-    midiExpressionController,
+    midiDominantAngleController,
     expression,
   ]);
 
@@ -135,7 +138,7 @@ function updateMidiControllers(
   if (brightness !== chord.brightness) {
     sendMidiMessage(chord.output, [
       getMidiStatus(midiControlChange, chord.channel),
-      midiBrightnessController,
+      midiSecondaryAngleController,
       brightness,
     ]);
     chord.brightness = brightness;
@@ -144,7 +147,7 @@ function updateMidiControllers(
   if (expression !== chord.expression) {
     sendMidiMessage(chord.output, [
       getMidiStatus(midiControlChange, chord.channel),
-      midiExpressionController,
+      midiDominantAngleController,
       expression,
     ]);
     chord.expression = expression;
@@ -228,7 +231,11 @@ export function useMidiOutput(
 
     if (!performance || !output) {
       if (activeChord) {
-        releaseMidiChord(activeChord);
+        if (output) {
+          releaseMidiChord(activeChord);
+        } else {
+          silenceMidiChord(activeChord);
+        }
         activeChordRef.current = null;
       }
 
@@ -249,7 +256,7 @@ export function useMidiOutput(
       activeChordRef.current = null;
 
       if (activeChord) {
-        releaseMidiChord(activeChord);
+        silenceMidiChord(activeChord);
       }
     },
     [],

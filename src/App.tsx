@@ -1,9 +1,11 @@
 import { useState } from "preact/hooks";
 
 import * as styles from "./App.css";
+import { ChordGrid } from "./components/ChordGrid";
 import { Dropdown } from "./components/Dropdown";
 import { HandOverlay } from "./components/HandOverlay";
 import { Settings } from "./components/Settings";
+import { VoicingGrid } from "./components/VoicingGrid";
 import { useAudioOutput, type Waveform } from "./hooks/useAudioOutput";
 import { useGesturePerformance } from "./hooks/useGesturePerformance";
 import { useHandTracking } from "./hooks/useHandTracking";
@@ -84,6 +86,13 @@ export function App() {
         videoHeight={videoHeight}
         data={data}
       />
+      <ChordGrid
+        dominantHand={dominantHand}
+        performance={performance}
+        root={root}
+        scale={scale}
+      />
+      <VoicingGrid data={data} dominantHand={dominantHand} />
       <div class={styles.menu}>
         <Dropdown
           label="Root"
