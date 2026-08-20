@@ -1,6 +1,6 @@
 import type { GenericEventHandler } from "preact";
 
-import * as styles from "./dropdown.css";
+import * as styles from "./Dropdown.css";
 
 type DropdownOption<Type extends string | number> = {
   label: string;

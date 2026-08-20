@@ -1,10 +1,14 @@
 import { useState } from "preact/hooks";
 
 import * as styles from "./App.css";
-import { Dropdown } from "./components/dropdown";
+import { Dropdown } from "./components/Dropdown";
 import { HandOverlay } from "./HandOverlay";
-import { useAudio, type Scale, type Waveform } from "./useAudio";
+import type { Scale } from "./music";
+import { useAudioOutput, type Waveform } from "./useAudioOutput";
+import { useGesturePerformance } from "./useGesturePerformance";
 import { useHandTracking } from "./useHandTracking";
+import { useMidiDevices } from "./useMidiDevices";
+import { useMidiOutput } from "./useMidiOutput";
 
 const rootOptions = [
   { label: "A", value: -3 },
@@ -32,13 +36,11 @@ const scaleOptions = [
 ] satisfies ReadonlyArray<{ label: string; value: Scale }>;
 
 const waveformOptions = [
+  { label: "None", value: "none" },
   { label: "Sawtooth", value: "sawtooth" },
   { label: "Sine", value: "sine" },
   { label: "Square", value: "square" },
   { label: "Triangle", value: "triangle" },
-  { label: "Organ", value: "organ" },
-  { label: "Pulse", value: "pulse" },
-  { label: "Shimmer", value: "shimmer" },
 ] satisfies ReadonlyArray<{ label: string; value: Waveform }>;
 
 export function App() {
@@ -46,7 +48,23 @@ export function App() {
   const [scale, setScale] = useState<Scale>("major");
   const [waveform, setWaveform] = useState<Waveform>("sawtooth");
   const { videoRef, videoWidth, videoHeight, data } = useHandTracking();
-  useAudio(data, root, scale, waveform);
+  const performance = useGesturePerformance(data, { root, scale });
+  const {
+    enableMidi,
+    outputs: midiOutputs,
+    selectedOutput,
+    selectOutput,
+    status: midiStatus,
+  } = useMidiDevices();
+  const midiOutputOptions = [
+    { label: "None", value: "" },
+    ...midiOutputs.map((output) => ({
+      label: output.name ?? "Unnamed MIDI output",
+      value: output.id,
+    })),
+  ];
+  useMidiOutput(performance, selectedOutput);
+  useAudioOutput(performance, waveform);
 
   return (
     <>
@@ -77,6 +95,34 @@ export function App() {
             setWaveform(event.currentTarget.value as Waveform)
           }
         />
+        {midiStatus === "enabled" ? (
+          <Dropdown
+            label="MIDI:"
+            options={midiOutputOptions}
+            value={selectedOutput?.id ?? ""}
+            onChange={(event) =>
+              selectOutput(event.currentTarget.value || null)
+            }
+          />
+        ) : (
+          <div class={styles.midiControl}>
+            <span>MIDI:</span>
+            <button
+              class={styles.midiButton}
+              disabled={midiStatus !== "idle"}
+              type="button"
+              onClick={enableMidi}
+            >
+              {midiStatus === "unsupported"
+                ? "Unsupported"
+                : midiStatus === "unavailable"
+                  ? "Unavailable"
+                  : midiStatus === "enabling"
+                    ? "Enabling…"
+                    : "Enable"}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
