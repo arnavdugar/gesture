@@ -6,20 +6,21 @@ import {
   getChordVoicing,
   type ChordVoicing,
   type Scale,
-} from "./music";
-import type { HandTrackingData } from "./useHandTracking";
+} from "../music";
+import type { Handedness, HandTrackingData } from "./useHandTracking";
 
 const chordHoldTimeMilliseconds = 100;
 const trackingLossGraceMilliseconds = 50;
 
 export type MusicalPerformance = {
-  leftSlider: number | null;
+  dominantSlider: number | null;
   notes: readonly number[];
-  rightSlider: number | null;
+  secondarySlider: number | null;
   triggerId: number;
 };
 
 type GestureSettings = {
+  dominantHand: Handedness;
   root: number;
   scale: Scale;
 };
@@ -31,20 +32,21 @@ type ActiveChord = {
 
 type GestureState = {
   alternateQuality: boolean;
-  leftSlider: number | null;
-  rightSlider: number | null;
+  sliders: Record<Handedness, number | null>;
   voicing: ChordVoicing;
 };
 
 export function useGesturePerformance(
   data: HandTrackingData,
-  { root, scale }: GestureSettings,
+  { dominantHand, root, scale }: GestureSettings,
 ): MusicalPerformance | null {
   const [activeChord, setActiveChord] = useState<ActiveChord | null>(null);
   const gestureStateRef = useRef<GestureState>({
     alternateQuality: false,
-    leftSlider: null,
-    rightSlider: null,
+    sliders: {
+      Left: null,
+      Right: null,
+    },
     voicing: "triadRoot",
   });
   const candidateChordDegreeRef = useRef<number | null>(null);
@@ -52,32 +54,33 @@ export function useGesturePerformance(
   const nextTriggerIdRef = useRef(1);
   const chordChangeTimeoutRef = useRef<number | null>(null);
 
-  const leftHand = data.Left;
+  const secondaryHandedness = dominantHand === "Left" ? "Right" : "Left";
+  const dominantHandData = data[dominantHand];
+  const secondaryHand = data[secondaryHandedness];
   const previousGestureState = gestureStateRef.current;
-  const isHoldingChord = leftHand?.handOrientation === "neither";
+  const isHoldingChord = secondaryHand?.handOrientation === "neither";
   const chordDegree = isHoldingChord
     ? (activeChord?.degree ?? null)
-    : leftHand
-      ? getChordDegree(leftHand.fingers)
+    : secondaryHand
+      ? getChordDegree(secondaryHand.fingers)
       : null;
-  const voicing = data.Right
-    ? getChordVoicing(data.Right.fingers)
+  const voicing = dominantHandData
+    ? getChordVoicing(dominantHandData.fingers)
     : previousGestureState.voicing;
   const alternateQuality =
-    leftHand?.handOrientation === "backwards"
+    secondaryHand?.handOrientation === "backwards"
       ? true
-      : leftHand?.handOrientation === "straight"
+      : secondaryHand?.handOrientation === "straight"
         ? false
         : previousGestureState.alternateQuality;
-  const leftSlider =
-    data.Left?.sliderProgress ?? previousGestureState.leftSlider;
-  const rightSlider =
-    data.Right?.sliderProgress ?? previousGestureState.rightSlider;
+  const sliders = {
+    Left: data.Left?.sliderProgress ?? previousGestureState.sliders.Left,
+    Right: data.Right?.sliderProgress ?? previousGestureState.sliders.Right,
+  };
 
   gestureStateRef.current = {
     alternateQuality,
-    leftSlider,
-    rightSlider,
+    sliders,
     voicing,
   };
 
@@ -147,7 +150,7 @@ export function useGesturePerformance(
   }
 
   return {
-    leftSlider,
+    dominantSlider: sliders[dominantHand],
     notes: getChordMidiNotes(
       activeChord.degree,
       root,
@@ -155,7 +158,7 @@ export function useGesturePerformance(
       voicing,
       alternateQuality,
     ),
-    rightSlider,
+    secondarySlider: sliders[secondaryHandedness],
     triggerId: activeChord.triggerId,
   };
 }

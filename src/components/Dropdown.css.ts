@@ -6,7 +6,15 @@ export const label = style({
   display: "flex",
   fontSize: 14,
   fontWeight: 500,
-  gap: 10,
+  gap: 8,
+});
+
+export const labelText = style({
+  selectors: {
+    "&::after": {
+      content: '":"',
+    },
+  },
 });
 
 export const wrapper = style({
@@ -28,21 +36,7 @@ export const wrapper = style({
 });
 
 export const select = style({
-  appearance: "none",
-  backgroundColor: "rgba(255, 255, 255, 0.25)",
-  border: "1px solid rgba(255, 255, 255, 0.25)",
-  borderRadius: 6,
-  color: "white",
   colorScheme: "dark",
-  cursor: "pointer",
-  font: "inherit",
   minWidth: 120,
-  outline: "none",
   padding: "7px 30px 7px 10px",
-  selectors: {
-    "&:focus-visible": {
-      borderColor: "white",
-      boxShadow: "0 0 0 2px rgba(255, 255, 255, 0.25)",
-    },
-  },
 });

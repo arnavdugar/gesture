@@ -3,7 +3,7 @@ import {
   type NormalizedLandmark,
 } from "@mediapipe/tasks-vision";
 
-import * as styles from "./App.css";
+import * as styles from "../App.css";
 import {
   fingerLandmarkIndexes,
   fingerNames,
@@ -13,7 +13,7 @@ import {
   sliderArc,
   type Handedness,
   type HandTrackingData,
-} from "./useHandTracking";
+} from "../hooks/useHandTracking";
 
 type Point = {
   x: number;

@@ -12,9 +12,27 @@ export const menu = style({
   gap: 16,
   justifyContent: "start",
   left: 16,
+  minHeight: 58,
   padding: "8px 12px",
   position: "absolute",
   right: 16,
+});
+
+export const settingsMenu = style({
+  marginLeft: "auto",
+});
+
+export const settingsButton = style({
+  alignItems: "center",
+  backgroundColor: "rgba(255, 255, 255, 0.18)",
+  fontWeight: 500,
+  height: 36,
+  padding: "0 14px",
+  selectors: {
+    '&[aria-expanded="true"]': {
+      backgroundColor: "rgba(255, 255, 255, 0.32)",
+    },
+  },
 });
 
 export const midiControl = style({
@@ -23,33 +41,15 @@ export const midiControl = style({
   display: "flex",
   fontSize: 14,
   fontWeight: 500,
-  gap: 10,
+  gap: 8,
 });
 
 export const midiButton = style({
-  appearance: "none",
-  backgroundColor: "rgba(255, 255, 255, 0.25)",
-  border: "1px solid rgba(255, 255, 255, 0.25)",
-  borderRadius: 6,
-  color: "white",
-  cursor: "pointer",
-  font: "inherit",
   minWidth: 120,
-  outline: "none",
   padding: "7px 10px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  selectors: {
-    "&:disabled": {
-      cursor: "default",
-      opacity: 0.65,
-    },
-    "&:focus-visible": {
-      borderColor: "white",
-      boxShadow: "0 0 0 2px rgba(255, 255, 255, 0.25)",
-    },
-  },
 });
 
 const fullScreenLayer = style({

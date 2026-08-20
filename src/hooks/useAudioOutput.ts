@@ -79,15 +79,15 @@ function updateChordNotes(
   });
 }
 
-function getFilterSettings(leftSlider: number | null) {
-  if (leftSlider === null) {
+function getFilterSettings(secondarySlider: number | null) {
+  if (secondarySlider === null) {
     return {
       frequency: defaultFilterFrequency,
       resonance: defaultFilterResonance,
     };
   }
 
-  const tilt = leftSlider * 2 - 1;
+  const tilt = secondarySlider * 2 - 1;
   const intensity = Math.abs(tilt);
 
   if (tilt < 0) {
@@ -103,12 +103,12 @@ function getFilterSettings(leftSlider: number | null) {
   };
 }
 
-function getChordGain(rightSlider: number | null) {
-  if (rightSlider === null) {
+function getChordGain(dominantSlider: number | null) {
+  if (dominantSlider === null) {
     return maximumChordGain;
   }
 
-  return Math.max(silentGain, (1 - rightSlider) * maximumChordGain);
+  return Math.max(silentGain, (1 - dominantSlider) * maximumChordGain);
 }
 
 function updateChordControls(
@@ -116,7 +116,9 @@ function updateChordControls(
   chord: ActiveChord,
   performance: MusicalPerformance,
 ) {
-  const { frequency, resonance } = getFilterSettings(performance.leftSlider);
+  const { frequency, resonance } = getFilterSettings(
+    performance.secondarySlider,
+  );
 
   chord.filter.frequency.setTargetAtTime(
     frequency,
@@ -125,7 +127,7 @@ function updateChordControls(
   );
   chord.filter.Q.setTargetAtTime(resonance, audioContext.currentTime, 0.04);
   chord.gain.gain.setTargetAtTime(
-    getChordGain(performance.rightSlider),
+    getChordGain(performance.dominantSlider),
     audioContext.currentTime,
     0.04,
   );
@@ -137,7 +139,9 @@ function startChord(
   waveform: BuiltInWaveform,
 ): ActiveChord {
   const startTime = audioContext.currentTime;
-  const { frequency, resonance } = getFilterSettings(performance.leftSlider);
+  const { frequency, resonance } = getFilterSettings(
+    performance.secondarySlider,
+  );
   const filter = audioContext.createBiquadFilter();
   const gain = audioContext.createGain();
 
@@ -148,7 +152,7 @@ function startChord(
 
   gain.gain.setValueAtTime(silentGain, startTime);
   gain.gain.exponentialRampToValueAtTime(
-    getChordGain(performance.rightSlider),
+    getChordGain(performance.dominantSlider),
     startTime + chordAttackSeconds,
   );
   gain.connect(audioContext.destination);

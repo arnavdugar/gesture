@@ -1,4 +1,4 @@
-import type { FingerPositions } from "./useHandTracking";
+import type { FingerPositions } from "./hooks/useHandTracking";
 
 const scaleSemitones = {
   major: [0, 2, 4, 5, 7, 9, 11],

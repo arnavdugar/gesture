@@ -2,13 +2,15 @@ import { useState } from "preact/hooks";
 
 import * as styles from "./App.css";
 import { Dropdown } from "./components/Dropdown";
-import { HandOverlay } from "./HandOverlay";
+import { HandOverlay } from "./components/HandOverlay";
+import { Settings } from "./components/Settings";
+import { useAudioOutput, type Waveform } from "./hooks/useAudioOutput";
+import { useGesturePerformance } from "./hooks/useGesturePerformance";
+import { useHandTracking } from "./hooks/useHandTracking";
+import { useMidiDevices } from "./hooks/useMidiDevices";
+import { useMidiOutput } from "./hooks/useMidiOutput";
+import { useSettings } from "./hooks/useSettings";
 import type { Scale } from "./music";
-import { useAudioOutput, type Waveform } from "./useAudioOutput";
-import { useGesturePerformance } from "./useGesturePerformance";
-import { useHandTracking } from "./useHandTracking";
-import { useMidiDevices } from "./useMidiDevices";
-import { useMidiOutput } from "./useMidiOutput";
 
 const rootOptions = [
   { label: "A", value: -3 },
@@ -44,11 +46,15 @@ const waveformOptions = [
 ] satisfies ReadonlyArray<{ label: string; value: Waveform }>;
 
 export function App() {
-  const [root, setRoot] = useState<number>(0);
-  const [scale, setScale] = useState<Scale>("major");
-  const [waveform, setWaveform] = useState<Waveform>("sawtooth");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { settings, updateSetting } = useSettings();
+  const { dominantHand, midiChannel, root, scale, waveform } = settings;
   const { videoRef, videoWidth, videoHeight, data } = useHandTracking();
-  const performance = useGesturePerformance(data, { root, scale });
+  const performance = useGesturePerformance(data, {
+    dominantHand,
+    root,
+    scale,
+  });
   const {
     enableMidi,
     outputs: midiOutputs,
@@ -63,7 +69,11 @@ export function App() {
       value: output.id,
     })),
   ];
-  useMidiOutput(performance, selectedOutput);
+  const learnMidiControl = useMidiOutput(
+    performance,
+    selectedOutput,
+    midiChannel,
+  );
   useAudioOutput(performance, waveform);
 
   return (
@@ -76,28 +86,32 @@ export function App() {
       />
       <div class={styles.menu}>
         <Dropdown
-          label="Root:"
+          label="Root"
           options={rootOptions}
           value={root}
-          onChange={(event) => setRoot(parseInt(event.currentTarget.value))}
+          onChange={(event) =>
+            updateSetting("root", parseInt(event.currentTarget.value))
+          }
         />
         <Dropdown
-          label="Scale:"
+          label="Scale"
           options={scaleOptions}
           value={scale}
-          onChange={(event) => setScale(event.currentTarget.value as Scale)}
+          onChange={(event) =>
+            updateSetting("scale", event.currentTarget.value as Scale)
+          }
         />
         <Dropdown
-          label="Waveform:"
+          label="Waveform"
           options={waveformOptions}
           value={waveform}
           onChange={(event) =>
-            setWaveform(event.currentTarget.value as Waveform)
+            updateSetting("waveform", event.currentTarget.value as Waveform)
           }
         />
         {midiStatus === "enabled" ? (
           <Dropdown
-            label="MIDI:"
+            label="MIDI"
             options={midiOutputOptions}
             value={selectedOutput?.id ?? ""}
             onChange={(event) =>
@@ -123,7 +137,30 @@ export function App() {
             </button>
           </div>
         )}
+        <div class={styles.settingsMenu}>
+          <button
+            aria-controls="settings-panel"
+            aria-expanded={settingsOpen}
+            aria-haspopup="dialog"
+            class={styles.settingsButton}
+            type="button"
+            onClick={() => setSettingsOpen((open) => !open)}
+          >
+            Settings
+          </button>
+        </div>
       </div>
+      <Settings
+        dominantHand={dominantHand}
+        midiChannel={midiChannel}
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onDominantHandChange={(handedness) =>
+          updateSetting("dominantHand", handedness)
+        }
+        onMidiChannelChange={(channel) => updateSetting("midiChannel", channel)}
+        onMidiControlLearn={learnMidiControl}
+      />
     </>
   );
 }

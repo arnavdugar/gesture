@@ -22,7 +22,7 @@ export function Dropdown<Type extends string | number>({
 }: DropdownProps<Type>) {
   return (
     <label class={styles.label}>
-      <span>{label}</span>
+      <span class={styles.labelText}>{label}</span>
       <span class={styles.wrapper}>
         <select
           aria-label={label}
