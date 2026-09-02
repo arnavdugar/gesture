@@ -1,21 +1,44 @@
 import type { Handedness } from "../hooks/useHandTracking";
 import type { MusicalPerformance } from "../hooks/useGesturePerformance";
 import { getChordMidiNotes, type Scale } from "../music";
+import degreeOneHand from "../assets/hands/2.png";
+import degreeTwoHand from "../assets/hands/3.png";
+import degreeThreeHand from "../assets/hands/4.png";
+import degreeFourHand from "../assets/hands/5.png";
+import degreeFiveHand from "../assets/hands/6.png";
+import degreeSixHand from "../assets/hands/7.png";
+import degreeSevenHand from "../assets/hands/8.png";
+import degreeEightHand from "../assets/hands/9.png";
+import degreeSevenBelowHand from "../assets/hands/11.png";
+import degreeSixBelowHand from "../assets/hands/12.png";
+import degreeFiveBelowHand from "../assets/hands/13.png";
 import * as styles from "./ChordGrid.css";
 
-const chordDegrees = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+const chordRows = [
+  { degree: -2, handIcon: degreeFiveBelowHand },
+  { degree: -1, handIcon: degreeSixBelowHand },
+  { degree: 0, handIcon: degreeSevenBelowHand },
+  { degree: 1, handIcon: degreeOneHand },
+  { degree: 2, handIcon: degreeTwoHand },
+  { degree: 3, handIcon: degreeThreeHand },
+  { degree: 4, handIcon: degreeFourHand },
+  { degree: 5, handIcon: degreeFiveHand },
+  { degree: 6, handIcon: degreeSixHand },
+  { degree: 7, handIcon: degreeSevenHand },
+  { degree: 8, handIcon: degreeEightHand },
+] as const;
 const pitchClassNames = [
   "C",
-  "C♯",
+  "C♯ / B♭",
   "D",
-  "D♯",
+  "D♯ / C♭",
   "E",
   "F",
-  "F♯",
+  "F♯ / E♭",
   "G",
-  "G♯",
+  "G♯ / F♭",
   "A",
-  "A♯",
+  "A♯ / G♭",
   "B",
 ] as const;
 const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
@@ -31,6 +54,7 @@ type ChordQuality = "major" | "minor" | "diminished" | "augmented";
 type ChordDescription = {
   name: string;
   numeral: string;
+  octaveSuffix: string;
 };
 
 type ChordGridProps = {
@@ -76,10 +100,14 @@ function getChordDescription(
   );
   const quality = getChordQuality(notes);
   const lowerCaseNumeral = quality === "minor" || quality === "diminished";
-  const baseNumeral = romanNumerals[(degree - 1) % romanNumerals.length];
+  const numeralIndex =
+    (((degree - 1) % romanNumerals.length) + romanNumerals.length) %
+    romanNumerals.length;
+  const baseNumeral = romanNumerals[numeralIndex];
   const qualitySuffix =
     quality === "diminished" ? "°" : quality === "augmented" ? "⁺" : "";
-  const octaveSuffix = degree > romanNumerals.length ? "⁺" : "";
+  const octaveSuffix = degree < 1 ? "-8" : "";
+  const upperOctaveSuffix = degree > romanNumerals.length ? "⁺" : "";
   const pitchClass = pitchClassNames[((notes[0] % 12) + 12) % 12];
   const displayPitchClass =
     quality === "minor" || quality === "diminished"
@@ -88,7 +116,8 @@ function getChordDescription(
 
   return {
     name: `${displayPitchClass} ${chordQualityLabels[quality]}`,
-    numeral: `${lowerCaseNumeral ? baseNumeral.toLowerCase() : baseNumeral}${qualitySuffix}${octaveSuffix}`,
+    numeral: `${lowerCaseNumeral ? baseNumeral.toLowerCase() : baseNumeral}${qualitySuffix}${upperOctaveSuffix}`,
+    octaveSuffix,
   };
 }
 
@@ -100,7 +129,10 @@ function ChordCell({ active, chord }: ChordCellProps) {
       data-active={active ? "true" : undefined}
       role="cell"
     >
-      <span class={styles.numeral}>{chord.numeral}</span>
+      <span class={styles.numeral}>
+        {chord.numeral}
+        {chord.octaveSuffix && <sup>({chord.octaveSuffix}ve)</sup>}
+      </span>
       <span class={styles.chordName}>{chord.name}</span>
     </div>
   );
@@ -117,10 +149,11 @@ export function ChordGrid({
   return (
     <div
       aria-label="Secondary hand chords"
-      class={`${styles.grid} ${styles.side[secondaryHand]}`}
+      class={`${styles.grid} ${styles.chordGrid} ${styles.side[secondaryHand]}`}
       role="table"
     >
       <div class={styles.row} role="row">
+        <div aria-hidden="true" />
         <div class={styles.columnHeader} role="columnheader">
           Palm Forward
         </div>
@@ -128,12 +161,24 @@ export function ChordGrid({
           Palm Backward
         </div>
       </div>
-      {chordDegrees.map((degree) => {
+      {chordRows.map(({ degree, handIcon }) => {
         const forwardChord = getChordDescription(degree, root, scale, false);
         const backwardChord = getChordDescription(degree, root, scale, true);
 
         return (
           <div class={styles.row} key={degree} role="row">
+            <div
+              aria-label={`Degree ${degree} hand gesture`}
+              class={styles.handCell}
+              role="rowheader"
+            >
+              <img
+                alt=""
+                aria-hidden="true"
+                class={styles.handIcon}
+                src={handIcon}
+              />
+            </div>
             <ChordCell
               active={
                 performance?.degree === degree && !performance.alternateQuality

@@ -13,6 +13,11 @@ export const grid = style({
   width: "min(320px, calc(50vw - 32px))",
 });
 
+export const chordGrid = style({
+  gridTemplateColumns: "34px repeat(2, minmax(0, 1fr))",
+  width: "min(360px, calc(50vw - 32px))",
+});
+
 export const side = styleVariants({
   Left: { left: 16 },
   Right: { right: 16 },
@@ -30,6 +35,20 @@ export const columnHeader = style({
   fontWeight: 500,
   paddingBottom: 2,
   textAlign: "center",
+});
+
+export const handCell = style({
+  alignItems: "center",
+  display: "flex",
+  height: 34,
+  justifyContent: "center",
+  overflow: "hidden",
+});
+
+export const handIcon = style({
+  height: 44,
+  transform: "scaleX(-1)",
+  width: 44,
 });
 
 export const cell = style({

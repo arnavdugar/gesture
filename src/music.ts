@@ -27,28 +27,54 @@ const middleC = 60;
 export type Scale = keyof typeof scaleSemitones;
 export type ChordVoicing = keyof typeof chordVoicings;
 
-function getRaisedFingerCount(fingers: FingerPositions) {
-  return Object.values(fingers).filter(Boolean).length;
-}
-
 export function getChordDegree(fingers: FingerPositions) {
   const { thumb, index, middle, ring, pinky } = fingers;
 
-  if (thumb && pinky && !index && !middle && !ring) {
+  if (!thumb && index && !middle && !ring && !pinky) {
+    return 1;
+  }
+
+  if (!thumb && index && middle && !ring && !pinky) {
+    return 2;
+  }
+
+  if (!thumb && index && middle && ring && !pinky) {
+    return 3;
+  }
+
+  if (!thumb && index && middle && ring && pinky) {
+    return 4;
+  }
+
+  if (thumb && index && middle && ring && pinky) {
+    return 5;
+  }
+
+  if (thumb && !index && !middle && !ring && pinky) {
     return 6;
   }
 
-  if (thumb && pinky && index && !middle && !ring) {
+  if (thumb && index && !middle && !ring && pinky) {
     return 7;
   }
 
-  if (thumb && pinky && index && middle && !ring) {
+  if (thumb && index && middle && !ring && pinky) {
     return 8;
   }
 
-  const raisedFingerCount = getRaisedFingerCount(fingers);
+  if (thumb && index && !middle && !ring && !pinky) {
+    return 0;
+  }
 
-  return raisedFingerCount > 0 ? raisedFingerCount : null;
+  if (thumb && index && middle && !ring && !pinky) {
+    return -1;
+  }
+
+  if (thumb && index && middle && ring && !pinky) {
+    return -2;
+  }
+
+  return null;
 }
 
 export function getChordVoicing(fingers: FingerPositions): ChordVoicing {
@@ -95,7 +121,9 @@ export function getChordVoicing(fingers: FingerPositions): ChordVoicing {
 
 function getScaleSemitone(semitones: readonly number[], scaleNote: number) {
   const octave = Math.floor(scaleNote / semitones.length);
-  const semitone = semitones[scaleNote % semitones.length];
+  const scaleIndex =
+    ((scaleNote % semitones.length) + semitones.length) % semitones.length;
+  const semitone = semitones[scaleIndex];
 
   return octave * 12 + semitone;
 }
