@@ -68,7 +68,8 @@ export function useGesturePerformance(
       ? getChordDegree(secondaryHand.fingers)
       : null;
   const voicing = dominantHandData
-    ? getChordVoicing(dominantHandData.fingers)
+    ? (getChordVoicing(dominantHandData.fingers) ??
+      previousGestureState.voicing)
     : previousGestureState.voicing;
   const alternateQuality =
     secondaryHand?.handOrientation === "backwards"
@@ -152,17 +153,18 @@ export function useGesturePerformance(
     return null;
   }
 
+  const { notes, alternateNotes } = getChordMidiNotes(
+    activeChord.degree,
+    root,
+    scale,
+    voicing,
+  );
+
   return {
     alternateQuality,
     degree: activeChord.degree,
     dominantSlider: sliders[dominantHand],
-    notes: getChordMidiNotes(
-      activeChord.degree,
-      root,
-      scale,
-      voicing,
-      alternateQuality,
-    ),
+    notes: alternateQuality ? alternateNotes : notes,
     secondarySlider: sliders[secondaryHandedness],
     triggerId: activeChord.triggerId,
     voicing,

@@ -1,35 +1,69 @@
+import { Fragment } from "preact";
+
 import type { Handedness } from "../hooks/useHandTracking";
 import type { MusicalPerformance } from "../hooks/useGesturePerformance";
-import type { ChordVoicing } from "../music";
-import * as gridStyles from "./ChordGrid.css";
+import { chordVoicings, type ChordVoicing } from "../music";
+import closedHand from "../assets/hands/1.png";
+import indexHand from "../assets/hands/2.png";
+import indexMiddleHand from "../assets/hands/3.png";
+import indexMiddleRingHand from "../assets/hands/4.png";
+import fourFingersHand from "../assets/hands/5.png";
+import openHand from "../assets/hands/6.png";
+import thumbPinkyHand from "../assets/hands/7.png";
+import thumbIndexPinkyHand from "../assets/hands/8.png";
+import thumbIndexMiddlePinkyHand from "../assets/hands/9.png";
+import thumbHand from "../assets/hands/10.png";
+import thumbIndexHand from "../assets/hands/11.png";
+import thumbIndexMiddleHand from "../assets/hands/12.png";
+import thumbIndexMiddleRingHand from "../assets/hands/13.png";
+import indexPinkyHand from "../assets/hands/14.png";
+import indexMiddlePinkyHand from "../assets/hands/15.png";
+import pinkyHand from "../assets/hands/16.png";
+import * as gridStyles from "./GestureGrid.css";
 import * as styles from "./VoicingGrid.css";
 
-type VoicingOption = {
-  label: string;
-  value: ChordVoicing;
+const handIcons: Readonly<Record<ChordVoicing, string>> = {
+  triadRoot: closedHand,
+  triadFirst: indexHand,
+  triadSecond: indexMiddleHand,
+  triadRootOctave: indexMiddleRingHand,
+  triadOpen: fourFingersHand,
+  seventhRoot: thumbHand,
+  seventhFirst: thumbIndexHand,
+  seventhSecond: thumbIndexMiddleHand,
+  seventhThird: thumbIndexMiddleRingHand,
+  seventhRootOctave: openHand,
+  suspendedSecond: indexPinkyHand,
+  suspendedRoot: indexMiddlePinkyHand,
+  rootFifth: pinkyHand,
+  seventhShell: thumbPinkyHand,
+  addedNinth: thumbIndexPinkyHand,
+  ninthRoot: thumbIndexMiddlePinkyHand,
 };
 
-const voicingRows: ReadonlyArray<
-  readonly [VoicingOption, VoicingOption | null]
-> = [
-  [
-    { label: "Root", value: "triadRoot" },
-    { label: "Root", value: "seventhRoot" },
-  ],
-  [
-    { label: "1st inversion", value: "triadFirst" },
-    { label: "1st inversion", value: "seventhFirst" },
-  ],
-  [
-    { label: "2nd inversion", value: "triadSecond" },
-    { label: "2nd inversion", value: "seventhSecond" },
-  ],
-  [
-    { label: "Octave", value: "triadRootOctave" },
-    { label: "3rd inversion", value: "seventhThird" },
-  ],
-  [{ label: "Suspended", value: "suspendedRoot" }, null],
-];
+const voicingGroups = [
+  {
+    headings: ["Triad", "Seventh"],
+    rows: [
+      ["triadRoot", "seventhRoot"],
+      ["triadFirst", "seventhFirst"],
+      ["triadSecond", "seventhSecond"],
+      ["triadRootOctave", "seventhThird"],
+      ["triadOpen", "seventhRootOctave"],
+    ],
+  },
+  {
+    headings: ["Suspended / Fifth", "Seventh / Ninth"],
+    rows: [
+      ["suspendedSecond", "seventhShell"],
+      ["suspendedRoot", "addedNinth"],
+      ["rootFifth", "ninthRoot"],
+    ],
+  },
+] as const satisfies ReadonlyArray<{
+  headings: readonly [string, string];
+  rows: ReadonlyArray<readonly [ChordVoicing, ChordVoicing]>;
+}>;
 
 type VoicingGridProps = {
   performance: MusicalPerformance | null;
@@ -38,18 +72,40 @@ type VoicingGridProps = {
 
 type VoicingCellProps = {
   active: boolean;
-  option: VoicingOption;
+  handedness: Handedness;
+  voicing: ChordVoicing;
 };
 
-function VoicingCell({ active, option }: VoicingCellProps) {
+function VoicingCell({ active, handedness, voicing }: VoicingCellProps) {
+  const { label, raisedFingers } = chordVoicings[voicing];
+  const gestureLabel = raisedFingers.length
+    ? `${raisedFingers.join(" + ")} raised`
+    : "Closed hand";
+
   return (
     <div
       aria-current={active ? "true" : undefined}
-      class={`${gridStyles.cell} ${styles.cell}`}
-      data-active={active ? "true" : undefined}
+      aria-label={`${gestureLabel}: ${label}`}
+      class={styles.option}
       role="cell"
     >
-      <span class={styles.label}>{option.label}</span>
+      <div
+        aria-hidden="true"
+        class={`${gridStyles.handCell} ${styles.handCell}`}
+      >
+        <img
+          alt=""
+          class={gridStyles.handIcon}
+          data-handedness={handedness}
+          src={handIcons[voicing]}
+        />
+      </div>
+      <div
+        class={`${gridStyles.cell} ${styles.cell}`}
+        data-active={active ? "true" : undefined}
+      >
+        <span class={styles.label}>{label}</span>
+      </div>
     </div>
   );
 }
@@ -60,33 +116,35 @@ export function VoicingGrid({ performance, dominantHand }: VoicingGridProps) {
   return (
     <div
       aria-label="Dominant hand voicings"
-      class={`${gridStyles.grid} ${gridStyles.side[dominantHand]}`}
+      class={`${gridStyles.grid} ${styles.grid} ${gridStyles.side[dominantHand]}`}
       role="table"
     >
-      <div class={gridStyles.row} role="row">
-        <div class={gridStyles.columnHeader} role="columnheader">
-          Triad
-        </div>
-        <div class={gridStyles.columnHeader} role="columnheader">
-          Seventh
-        </div>
-      </div>
-      {voicingRows.map(([triad, seventh]) => (
-        <div class={gridStyles.row} key={triad.value} role="row">
-          <VoicingCell active={activeVoicing === triad.value} option={triad} />
-          {seventh ? (
-            <VoicingCell
-              active={activeVoicing === seventh.value}
-              option={seventh}
-            />
-          ) : (
-            <div
-              aria-label="Not applicable"
-              class={styles.emptyCell}
-              role="cell"
-            />
-          )}
-        </div>
+      {voicingGroups.map(({ headings, rows }) => (
+        <Fragment key={headings[0]}>
+          <div class={gridStyles.row} role="row">
+            {headings.map((heading) => (
+              <div
+                class={`${gridStyles.columnHeader} ${styles.columnHeader}`}
+                key={heading}
+                role="columnheader"
+              >
+                {heading}
+              </div>
+            ))}
+          </div>
+          {rows.map((voicings) => (
+            <div class={gridStyles.row} key={voicings[0]} role="row">
+              {voicings.map((voicing) => (
+                <VoicingCell
+                  active={activeVoicing === voicing}
+                  handedness={dominantHand}
+                  key={voicing}
+                  voicing={voicing}
+                />
+              ))}
+            </div>
+          ))}
+        </Fragment>
       ))}
     </div>
   );

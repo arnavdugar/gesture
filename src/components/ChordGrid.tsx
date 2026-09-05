@@ -1,6 +1,11 @@
 import type { Handedness } from "../hooks/useHandTracking";
 import type { MusicalPerformance } from "../hooks/useGesturePerformance";
-import { getChordMidiNotes, type Scale } from "../music";
+import {
+  chordDegrees,
+  getChordMidiNotes,
+  type ChordDegree,
+  type Scale,
+} from "../music";
 import degreeOneHand from "../assets/hands/2.png";
 import degreeTwoHand from "../assets/hands/3.png";
 import degreeThreeHand from "../assets/hands/4.png";
@@ -12,21 +17,22 @@ import degreeEightHand from "../assets/hands/9.png";
 import degreeSevenBelowHand from "../assets/hands/11.png";
 import degreeSixBelowHand from "../assets/hands/12.png";
 import degreeFiveBelowHand from "../assets/hands/13.png";
+import * as gridStyles from "./GestureGrid.css";
 import * as styles from "./ChordGrid.css";
 
-const chordRows = [
-  { degree: -2, handIcon: degreeFiveBelowHand },
-  { degree: -1, handIcon: degreeSixBelowHand },
-  { degree: 0, handIcon: degreeSevenBelowHand },
-  { degree: 1, handIcon: degreeOneHand },
-  { degree: 2, handIcon: degreeTwoHand },
-  { degree: 3, handIcon: degreeThreeHand },
-  { degree: 4, handIcon: degreeFourHand },
-  { degree: 5, handIcon: degreeFiveHand },
-  { degree: 6, handIcon: degreeSixHand },
-  { degree: 7, handIcon: degreeSevenHand },
-  { degree: 8, handIcon: degreeEightHand },
-] as const;
+const handIcons: Readonly<Record<ChordDegree, string>> = {
+  [-2]: degreeFiveBelowHand,
+  [-1]: degreeSixBelowHand,
+  0: degreeSevenBelowHand,
+  1: degreeOneHand,
+  2: degreeTwoHand,
+  3: degreeThreeHand,
+  4: degreeFourHand,
+  5: degreeFiveHand,
+  6: degreeSixHand,
+  7: degreeSevenHand,
+  8: degreeEightHand,
+};
 const pitchClassNames = [
   "C",
   "C♯ / D♭",
@@ -87,17 +93,8 @@ function getChordQuality(notes: readonly number[]): ChordQuality {
 
 function getChordDescription(
   degree: number,
-  root: number,
-  scale: Scale,
-  alternateQuality: boolean,
+  notes: readonly number[],
 ): ChordDescription {
-  const notes = getChordMidiNotes(
-    degree,
-    root,
-    scale,
-    "triadRoot",
-    alternateQuality,
-  );
   const quality = getChordQuality(notes);
   const lowerCaseNumeral = quality === "minor" || quality === "diminished";
   const numeralIndex =
@@ -121,7 +118,7 @@ function ChordCell({ active, chord }: ChordCellProps) {
   return (
     <div
       aria-current={active ? "true" : undefined}
-      class={styles.cell}
+      class={gridStyles.cell}
       data-active={active ? "true" : undefined}
       role="cell"
     >
@@ -145,34 +142,41 @@ export function ChordGrid({
   return (
     <div
       aria-label="Secondary hand chords"
-      class={`${styles.grid} ${styles.chordGrid} ${styles.side[secondaryHand]}`}
+      class={`${gridStyles.grid} ${styles.grid} ${gridStyles.side[secondaryHand]}`}
       role="table"
     >
-      <div class={styles.row} role="row">
+      <div class={gridStyles.row} role="row">
         <div aria-hidden="true" />
-        <div class={styles.columnHeader} role="columnheader">
+        <div class={gridStyles.columnHeader} role="columnheader">
           Palm Forward
         </div>
-        <div class={styles.columnHeader} role="columnheader">
+        <div class={gridStyles.columnHeader} role="columnheader">
           Palm Backward
         </div>
       </div>
-      {chordRows.map(({ degree, handIcon }) => {
-        const forwardChord = getChordDescription(degree, root, scale, false);
-        const backwardChord = getChordDescription(degree, root, scale, true);
+      {chordDegrees.map(({ degree, raisedFingers }) => {
+        const { notes, alternateNotes } = getChordMidiNotes(
+          degree,
+          root,
+          scale,
+          "triadRoot",
+        );
+        const forwardChord = getChordDescription(degree, notes);
+        const backwardChord = getChordDescription(degree, alternateNotes);
 
         return (
-          <div class={styles.row} key={degree} role="row">
+          <div class={gridStyles.row} key={degree} role="row">
             <div
-              aria-label={`Degree ${degree} hand gesture`}
-              class={styles.handCell}
+              aria-label={`Degree ${degree}: ${raisedFingers.join(" + ")} raised`}
+              class={gridStyles.handCell}
               role="rowheader"
             >
               <img
                 alt=""
                 aria-hidden="true"
-                class={styles.handIcon}
-                src={handIcon}
+                class={gridStyles.handIcon}
+                data-handedness={secondaryHand}
+                src={handIcons[degree]}
               />
             </div>
             <ChordCell
