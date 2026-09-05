@@ -29,16 +29,16 @@ const chordRows = [
 ] as const;
 const pitchClassNames = [
   "C",
-  "C♯ / B♭",
+  "C♯ / D♭",
   "D",
-  "D♯ / C♭",
+  "D♯ / E♭",
   "E",
   "F",
-  "F♯ / E♭",
+  "F♯ / G♭",
   "G",
-  "G♯ / F♭",
+  "G♯ / A♭",
   "A",
-  "A♯ / G♭",
+  "A♯ / B♭",
   "B",
 ] as const;
 const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
@@ -109,13 +109,9 @@ function getChordDescription(
   const octaveSuffix = degree < 1 ? "-8" : "";
   const upperOctaveSuffix = degree > romanNumerals.length ? "⁺" : "";
   const pitchClass = pitchClassNames[((notes[0] % 12) + 12) % 12];
-  const displayPitchClass =
-    quality === "minor" || quality === "diminished"
-      ? pitchClass.toLowerCase()
-      : pitchClass;
 
   return {
-    name: `${displayPitchClass} ${chordQualityLabels[quality]}`,
+    name: `${pitchClass} ${chordQualityLabels[quality]}`,
     numeral: `${lowerCaseNumeral ? baseNumeral.toLowerCase() : baseNumeral}${qualitySuffix}${upperOctaveSuffix}`,
     octaveSuffix,
   };
