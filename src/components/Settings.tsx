@@ -4,6 +4,7 @@ import type { Handedness } from "../hooks/useHandTracking";
 import type { MidiLearnControl } from "../hooks/useMidiOutput";
 import { Dropdown } from "./Dropdown";
 import * as styles from "./Settings.css";
+import { Slider } from "./Slider";
 
 const dominantHandOptions = [
   { label: "Right", value: "Right" },
@@ -21,6 +22,10 @@ const midiControlColumns = ["angle", "horizontal", "vertical"] as const;
 type SettingsProps = {
   dominantHand: Handedness;
   midiChannel: number;
+  minHandDetectionConfidence: number;
+  minHandPresenceConfidence: number;
+  onMinHandDetectionConfidenceChange: (value: number) => void;
+  onMinHandPresenceConfidenceChange: (value: number) => void;
   onClose: () => void;
   onDominantHandChange: (handedness: Handedness) => void;
   onMidiChannelChange: (channel: number) => void;
@@ -31,6 +36,10 @@ type SettingsProps = {
 export function Settings({
   dominantHand,
   midiChannel,
+  minHandDetectionConfidence,
+  minHandPresenceConfidence,
+  onMinHandDetectionConfidenceChange,
+  onMinHandPresenceConfidenceChange,
   onClose,
   onDominantHandChange,
   onMidiChannelChange,
@@ -91,6 +100,26 @@ export function Settings({
           onChange={(event) =>
             onDominantHandChange(event.currentTarget.value as Handedness)
           }
+        />
+        <Slider
+          id="minHandDetectionConfidence"
+          label="Detection confidence"
+          min={0}
+          max={1}
+          step={0.01}
+          value={minHandDetectionConfidence}
+          onChange={onMinHandDetectionConfidenceChange}
+          formatValue={(value) => value.toFixed(2)}
+        />
+        <Slider
+          id="minHandPresenceConfidence"
+          label="Presence confidence"
+          min={0}
+          max={1}
+          step={0.01}
+          value={minHandPresenceConfidence}
+          onChange={onMinHandPresenceConfidenceChange}
+          formatValue={(value) => value.toFixed(2)}
         />
       </section>
       <section aria-labelledby="midi-settings-title" class={styles.section}>

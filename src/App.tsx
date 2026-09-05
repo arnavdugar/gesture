@@ -50,8 +50,19 @@ const waveformOptions = [
 export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { settings, updateSetting } = useSettings();
-  const { dominantHand, midiChannel, root, scale, waveform } = settings;
-  const { videoRef, videoWidth, videoHeight, data } = useHandTracking();
+  const {
+    dominantHand,
+    midiChannel,
+    minHandDetectionConfidence,
+    minHandPresenceConfidence,
+    root,
+    scale,
+    waveform,
+  } = settings;
+  const { videoRef, videoWidth, videoHeight, data } = useHandTracking({
+    minHandDetectionConfidence,
+    minHandPresenceConfidence,
+  });
   const performance = useGesturePerformance(data, {
     dominantHand,
     root,
@@ -161,6 +172,14 @@ export function App() {
       </div>
       <Settings
         dominantHand={dominantHand}
+        minHandDetectionConfidence={minHandDetectionConfidence}
+        minHandPresenceConfidence={minHandPresenceConfidence}
+        onMinHandDetectionConfidenceChange={(value) =>
+          updateSetting("minHandDetectionConfidence", value)
+        }
+        onMinHandPresenceConfidenceChange={(value) =>
+          updateSetting("minHandPresenceConfidence", value)
+        }
         midiChannel={midiChannel}
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}

@@ -7,6 +7,7 @@ export const panel = style({
   borderRadius: 10,
   color: "white",
   minHeight: 240,
+  overflowY: "auto",
   padding: 16,
   position: "fixed",
   width: "min(440px, calc(100vw - 48px))",
@@ -30,6 +31,9 @@ export const title = style({
 
 export const section = style({
   borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+  display: "flex",
+  flexDirection: "column",
+  gap: 16,
   marginTop: 16,
   paddingTop: 16,
 });
@@ -37,7 +41,7 @@ export const section = style({
 export const sectionTitle = style({
   fontSize: 16,
   fontWeight: 600,
-  margin: "0 0 12px",
+  margin: 0,
 });
 
 export const closeButton = style({
@@ -69,7 +73,6 @@ export const midiLearnGrid = style({
   columnGap: 8,
   display: "grid",
   gridTemplateColumns: "max-content repeat(3, minmax(0, 1fr))",
-  marginTop: 12,
   rowGap: 8,
 });
 

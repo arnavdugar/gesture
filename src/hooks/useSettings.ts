@@ -27,6 +27,8 @@ const waveforms = new Set<Waveform>([
 export type SettingsState = {
   dominantHand: Handedness;
   midiChannel: number;
+  minHandDetectionConfidence: number;
+  minHandPresenceConfidence: number;
   root: number;
   scale: Scale;
   waveform: Waveform;
@@ -35,6 +37,8 @@ export type SettingsState = {
 export const defaultSettings: Readonly<SettingsState> = {
   dominantHand: "Right",
   midiChannel: 1,
+  minHandDetectionConfidence: 0.8,
+  minHandPresenceConfidence: 0.8,
   root: 0,
   scale: "major",
   waveform: "sine",
@@ -63,6 +67,15 @@ function isRoot(value: unknown): value is number {
     Number.isInteger(value) &&
     value >= -3 &&
     value <= 8
+  );
+}
+
+function isConfidence(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 1
   );
 }
 
@@ -108,6 +121,16 @@ function loadSettings(): SettingsState {
       root: isRoot(storedSettings.root)
         ? storedSettings.root
         : defaultSettings.root,
+      minHandDetectionConfidence: isConfidence(
+        storedSettings.minHandDetectionConfidence,
+      )
+        ? storedSettings.minHandDetectionConfidence
+        : defaultSettings.minHandDetectionConfidence,
+      minHandPresenceConfidence: isConfidence(
+        storedSettings.minHandPresenceConfidence,
+      )
+        ? storedSettings.minHandPresenceConfidence
+        : defaultSettings.minHandPresenceConfidence,
       scale: isScale(storedSettings.scale)
         ? storedSettings.scale
         : defaultSettings.scale,

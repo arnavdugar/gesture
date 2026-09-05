@@ -218,7 +218,16 @@ function getSliderProgress(
   return handedness === "Left" ? progress : 1 - progress;
 }
 
-export function useHandTracking() {
+type HandTrackingOptions = {
+  minHandDetectionConfidence: number;
+  minHandPresenceConfidence: number;
+};
+
+const optionsDebounceMilliseconds = 200;
+
+export function useHandTracking(options: HandTrackingOptions) {
+  const optionsRef = useRef(options);
+  const { minHandDetectionConfidence, minHandPresenceConfidence } = options;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [frame, setFrame] = useState({
     videoWidth: 0,
@@ -230,11 +239,23 @@ export function useHandTracking() {
   });
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      optionsRef.current = {
+        minHandDetectionConfidence,
+        minHandPresenceConfidence,
+      };
+    }, optionsDebounceMilliseconds);
+
+    return () => window.clearTimeout(timeout);
+  }, [minHandDetectionConfidence, minHandPresenceConfidence]);
+
+  useEffect(() => {
     let stream: MediaStream | undefined;
     let videoElement: HTMLVideoElement | undefined;
     let handLandmarker: HandLandmarker | undefined;
     let videoFrameCallback: number | undefined;
     let disposed = false;
+    let appliedOptions = optionsRef.current;
 
     const loadHandLandmarker = async () => {
       const vision = await FilesetResolver.forVisionTasks(wasmPath);
@@ -242,6 +263,7 @@ export function useHandTracking() {
         baseOptions: { modelAssetPath: modelPath, delegate: "GPU" },
         runningMode: "VIDEO",
         numHands: 2,
+        ...appliedOptions,
       });
 
       if (disposed) {
@@ -291,7 +313,19 @@ export function useHandTracking() {
         return;
       }
 
-      const processFrame = (timestamp: DOMHighResTimeStamp) => {
+      const processFrame = async (timestamp: DOMHighResTimeStamp) => {
+        const nextOptions = optionsRef.current;
+        if (
+          nextOptions.minHandDetectionConfidence !==
+            appliedOptions.minHandDetectionConfidence ||
+          nextOptions.minHandPresenceConfidence !==
+            appliedOptions.minHandPresenceConfidence
+        ) {
+          await landmarker.setOptions(nextOptions);
+          appliedOptions = nextOptions;
+        }
+        if (disposed) return;
+
         const result = landmarker.detectForVideo(video, timestamp);
         const bestCandidates: HandCandidates = {
           Left: null,
@@ -353,9 +387,15 @@ export function useHandTracking() {
           videoHeight: video.videoHeight,
           data: nextData,
         });
-        videoFrameCallback = video.requestVideoFrameCallback(processFrame);
+        videoFrameCallback = video.requestVideoFrameCallback(onVideoFrame);
       };
-      videoFrameCallback = video.requestVideoFrameCallback(processFrame);
+      const onVideoFrame = (timestamp: DOMHighResTimeStamp) => {
+        void processFrame(timestamp).catch((error: unknown) => {
+          dispose();
+          console.error("Unable to process hand tracking frame.", error);
+        });
+      };
+      videoFrameCallback = video.requestVideoFrameCallback(onVideoFrame);
     };
 
     const dispose = () => {
