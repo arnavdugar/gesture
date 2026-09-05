@@ -183,6 +183,7 @@ export function useMidiOutput(
 ) {
   const activeChordRef = useRef<ActiveMidiChord | null>(null);
   const midiLearnIntervalRef = useRef<number | null>(null);
+  const pageHiddenRef = useRef(false);
 
   const cancelMidiLearnSweep = useCallback(() => {
     if (midiLearnIntervalRef.current !== null) {
@@ -199,7 +200,7 @@ export function useMidiOutput(
         return true;
       }
 
-      if (!output) {
+      if (!output || pageHiddenRef.current) {
         return false;
       }
 
@@ -227,6 +228,10 @@ export function useMidiOutput(
   );
 
   useEffect(() => {
+    if (pageHiddenRef.current) {
+      return;
+    }
+
     const activeChord = activeChordRef.current;
 
     if (!performance || !output) {
@@ -250,19 +255,31 @@ export function useMidiOutput(
     );
   }, [channel, output, performance]);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const silenceOutput = () => {
+      pageHiddenRef.current = true;
+      cancelMidiLearnSweep();
+
       const activeChord = activeChordRef.current;
       activeChordRef.current = null;
 
       if (activeChord) {
         silenceMidiChord(activeChord);
       }
-    },
-    [],
-  );
+    };
+    const resumeOutput = () => {
+      pageHiddenRef.current = false;
+    };
 
-  useEffect(() => cancelMidiLearnSweep, [cancelMidiLearnSweep]);
+    window.addEventListener("pagehide", silenceOutput);
+    window.addEventListener("pageshow", resumeOutput);
+
+    return () => {
+      window.removeEventListener("pagehide", silenceOutput);
+      window.removeEventListener("pageshow", resumeOutput);
+      silenceOutput();
+    };
+  }, [cancelMidiLearnSweep]);
 
   return learnControl;
 }
