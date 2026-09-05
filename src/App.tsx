@@ -92,7 +92,7 @@ export function App() {
         root={root}
         scale={scale}
       />
-      <VoicingGrid data={data} dominantHand={dominantHand} />
+      <VoicingGrid performance={performance} dominantHand={dominantHand} />
       <div class={styles.menu}>
         <Dropdown
           label="Root"

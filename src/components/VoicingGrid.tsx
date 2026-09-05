@@ -1,5 +1,6 @@
-import type { Handedness, HandTrackingData } from "../hooks/useHandTracking";
-import { getChordVoicing, type ChordVoicing } from "../music";
+import type { Handedness } from "../hooks/useHandTracking";
+import type { MusicalPerformance } from "../hooks/useGesturePerformance";
+import type { ChordVoicing } from "../music";
 import * as gridStyles from "./ChordGrid.css";
 import * as styles from "./VoicingGrid.css";
 
@@ -31,7 +32,7 @@ const voicingRows: ReadonlyArray<
 ];
 
 type VoicingGridProps = {
-  data: HandTrackingData;
+  performance: MusicalPerformance | null;
   dominantHand: Handedness;
 };
 
@@ -53,11 +54,8 @@ function VoicingCell({ active, option }: VoicingCellProps) {
   );
 }
 
-export function VoicingGrid({ data, dominantHand }: VoicingGridProps) {
-  const dominantHandData = data[dominantHand];
-  const activeVoicing = dominantHandData
-    ? getChordVoicing(dominantHandData.fingers)
-    : null;
+export function VoicingGrid({ performance, dominantHand }: VoicingGridProps) {
+  const activeVoicing = performance?.voicing;
 
   return (
     <div
